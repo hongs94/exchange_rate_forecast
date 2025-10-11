@@ -52,7 +52,7 @@ jobs:
           MONGO_DB_NAME: ${{ secrets.MONGO_DB_NAME }}
         run: |
           echo "predictor.py 실행"
-          python -m backend.ml.predictor
+          python -m backend.predictor
 
       # 실행 완료 로그
       - name: Job completed
