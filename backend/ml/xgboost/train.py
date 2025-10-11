@@ -3,10 +3,12 @@ import json
 import joblib
 import numpy as np
 import pandas as pd
+import xgboost as xgb
 
 from itertools import product
 from .model import build_model
 from .data_processor import DataProcessor
+from xgboost.callback import EarlyStopping
 from sklearn.metrics import mean_absolute_percentage_error, mean_squared_error, r2_score
 from .constant import (
     BASE_DIR,
@@ -43,6 +45,12 @@ def find_best_hyperparams(X_train, y_train, X_val, y_val):
 
     best_val_loss = float("inf")
     best_params = None
+    
+    es = EarlyStopping(
+        rounds=3, 
+        min_delta=0,
+        save_best=True,
+    )
 
     for n_estimators, max_depth, learning_rate in product(
         *hyperparams_candidates.values()
@@ -54,7 +62,7 @@ def find_best_hyperparams(X_train, y_train, X_val, y_val):
             X_train,
             y_train.flatten(),
             eval_set=eval_set,
-            early_stopping_rounds=3,
+            callbacks=[es],
             verbose=False,
         )
 
