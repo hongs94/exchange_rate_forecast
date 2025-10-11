@@ -5,7 +5,7 @@ import pandas as pd
 
 from datetime import datetime
 from .data_processor import DataProcessor
-from .constant import LOOK_BACK, MODEL_DIR, MODEL_FILE_TEMPLATE, PRED_TRUE_DIR, ACCUMULATED_PRED_CSV
+from .constant import (LOOK_BACK, MODEL_DIR, MODEL_FILE_TEMPLATE, PRED_TRUE_DIR, ACCUMULATED_PRED_CSV)
 
 def load_model(target: str):
     model_path = MODEL_DIR / f"{target}{MODEL_FILE_TEMPLATE}"
@@ -29,15 +29,13 @@ def predict_next_day():
         model = load_model(target)
 
         X = data.drop(columns=[target])
-        X_last = X.iloc[-LOOK_BACK:] # LOOK_BACK 기간의 피처 데이터
+        X_last = X.iloc[-LOOK_BACK:]
 
         feature_scaler = data_processor.get_feature_scaler(target=target)
         
         # XGBoost를 위해 X_last를 1D 벡터로 변환 후 2D로 reshape
         X_input_scaled = feature_scaler.transform(X_last).flatten().reshape(1, -1)
-        
         y_pred_scaled = model.predict(X_input_scaled)
-
         target_scaler = data_processor.get_target_scaler(target=target)
         
         # 예측값 역변환

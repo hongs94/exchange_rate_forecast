@@ -3,6 +3,7 @@ import pandas as pd
 import seaborn as sns
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
+
 from ml.data_merge import create_merged_dataset
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
@@ -92,7 +93,7 @@ def main():
         # VIF 점수 출력 (다중공선성 확인)
         X = sm.add_constant(df_clean[features])
         vif_df = calculate_vif(X.drop(columns=["const"]))
-        print(f"\n{target.upper()}/KRW 독립변수 VIF 점수:")
+        print(f"\n{target.upper()} 독립변수 VIF 점수:")
         print(vif_df)
         
     # USD, DXY 동조화 시각화 (Dual Y-Axis Plot)

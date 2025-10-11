@@ -1,8 +1,9 @@
 import os
+import keras
 import pandas as pd
-from tensorflow import keras
+
 from .data_processor import DataProcessor
-from .constant import LOOK_BACK, MODEL_DIR, KERAS_FILE_TEMPLATE, PRED_TRUE_DIR, ACCUMULATED_PRED_CSV
+from .constant import (LOOK_BACK, MODEL_DIR, KERAS_FILE_TEMPLATE, PRED_TRUE_DIR, ACCUMULATED_PRED_CSV)
 
 def load_model(target: str):
     model_path = MODEL_DIR / f"{target}{KERAS_FILE_TEMPLATE}"
@@ -15,12 +16,11 @@ def predict_next_day():
     targets = data_processor.targets
     pred_values = {}
     
-    # 1. 데이터셋의 가장 마지막 날짜를 가져옴
+    # 데이터셋의 가장 마지막 날짜를 가져옴
     last_date = data_processor.origin_data.index.max()
     
-    # 2. 예측 날짜를 마지막 날짜의 다음 날로 설정
+    # 예측 날짜를 마지막 날짜의 다음 날로 설정
     pred_date = last_date + pd.Timedelta(days=1)
-    
     prediction_df = pd.DataFrame(index=[pred_date])
 
     for target in targets:
@@ -41,12 +41,9 @@ def predict_next_day():
         y_pred_scaled = model.predict(X_input_scaled)
 
         target_scaler = data_processor.get_target_scaler(target=target)
-        y_pred = target_scaler.inverse_transform(
-            y_pred_scaled.reshape(-1, 1)
-        ).flatten()[0]
+        y_pred = target_scaler.inverse_transform(y_pred_scaled.reshape(-1, 1)).flatten()[0]
 
         pred_values[target] = y_pred
-        
         prediction_df[target] = y_pred
     
     os.makedirs(PRED_TRUE_DIR, exist_ok=True)

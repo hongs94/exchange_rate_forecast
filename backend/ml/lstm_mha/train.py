@@ -7,14 +7,9 @@ import tensorflow as tf
 from itertools import product
 from .model import build_model
 from .data_processor import DataProcessor
+from .predict import predict_next_day
 from sklearn.metrics import mean_absolute_percentage_error, mean_squared_error, r2_score
-from .constant import (
-    BASE_DIR,
-    LOOK_BACK,
-    MODEL_DIR,
-    PRED_TRUE_DIR,
-    KERAS_FILE_TEMPLATE,
-)
+from .constant import (BASE_DIR, LOOK_BACK, MODEL_DIR, PRED_TRUE_DIR, KERAS_FILE_TEMPLATE)
 
 # 성능지표 계산
 def evaluate_predictions(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
@@ -26,10 +21,11 @@ def evaluate_predictions(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
 
 # 롤링 윈도우 방식의 인덱스 생성
 def rolling_split_index(total_len, train_size=1200, test_size=300):
-    for start in range(0, total_len - train_size - test_size + 1, test_size):
+    for start in range(0, total_len - train_size, test_size):
+        end = min(start + train_size + test_size, total_len)
         yield (
             np.arange(start, start + train_size),
-            np.arange(start + train_size, start + train_size + test_size),
+            np.arange(start + train_size, end),
         )
 
 # 최적의 하이퍼파라미터 탐색
@@ -38,30 +34,29 @@ def find_best_hyperparams(X_train, y_train, X_val, y_val, num_features):
         "lstm_units": [100, 150],
         "dropout_rate": [0.2, 0.3],
         "learning_rate": [0.001, 0.0005],
+        "batch_size": [32, 64]
     }
 
     best_val_loss = float("inf")
     best_params = None
 
-    for lstm_units, dropout_rate, learning_rate in product(
+    for lstm_units, dropout_rate, learning_rate, batch_size in product(
         *hyperparams_candidates.values()
     ):
         model = build_model(
             LOOK_BACK, num_features, lstm_units, dropout_rate, learning_rate
         )
-        callbacks = [
-            tf.keras.callbacks.EarlyStopping(
-                monitor="val_loss", patience=3, restore_best_weights=True
-            )
-        ]
+        early_stopping = tf.keras.callbacks.EarlyStopping(
+            monitor="val_loss", patience=3, restore_best_weights=True
+        )
 
         history = model.fit(
             X_train,
             y_train,
             validation_data=(X_val, y_val),
             epochs=30,
-            batch_size=32,
-            callbacks=callbacks,
+            batch_size=batch_size,
+            callbacks=[early_stopping],
             shuffle=False,
             verbose=0,
         )
@@ -69,7 +64,7 @@ def find_best_hyperparams(X_train, y_train, X_val, y_val, num_features):
         val_loss = min(history.history["val_loss"])
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            best_params = (lstm_units, dropout_rate, learning_rate)
+            best_params = (lstm_units, dropout_rate, learning_rate, batch_size)
 
     return best_params
 
@@ -154,7 +149,14 @@ def train():
         # 전체 데이터로 최종 모델 학습 및 저장
         print("전체 데이터로 최종 모델 학습 및 저장")
         final_model = build_model(LOOK_BACK, X_seq.shape[2], *best_params)
-        final_model.fit(X_seq, y_seq, epochs=50, batch_size=32, shuffle=False, verbose=0)
+        final_model.fit(
+            X_seq,
+            y_seq,
+            epochs=50,
+            batch_size=32,
+            shuffle=False,
+            verbose=0,
+        )
 
         os.makedirs(MODEL_DIR, exist_ok=True)
         final_model.save(MODEL_DIR / f"{target}{KERAS_FILE_TEMPLATE}")
@@ -167,7 +169,16 @@ def train():
         }
         results[target] = {"best_params": best_params_dict, "metrics": metrics}
 
-    # 최종 결과를 JSON 파일로 저장
+        # # 디버깅 메세지
+        # print(f"데이터 시퀀스 최대 날짜: {y_idxs.max()}")
+        # print(f"롤링 윈도우 마지막 인덱스: {train_idx[-1]}, {test_idx[-1]}")
+        # print(f"최종 저장된 데이터 최대 날짜: {y_idxs_concat.max()}")
+
+    # 학습 완료 후 1일 예측값 생성 및 누적 저장
+    print("1일 후 예측값 생성 중")
+    predict_next_day()
+
+    # 최종 결과 저장
     with open(results_file, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=4)
     print("모든 학습/결과 처리 완료.")

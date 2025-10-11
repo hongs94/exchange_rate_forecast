@@ -1,7 +1,7 @@
 import pandas as pd
 import ml.lstm_mha.predict as lstm_predict
 import ml.xgboost.predict as XGBoost_predict
-import ml.attention_lstm.predict as attention_lstm_rolling_predict
+import ml.attention_lstm.predict as attention_lstm_predict
 
 from datetime import datetime
 from .database import MongoDB
@@ -16,7 +16,7 @@ def insert_predicted_price():
         {"date": today, "model": "LSTM-Rolling", **lstm_predict.predict_next_day()}
     )
     results.append(
-        {"date": today, "model": "Attention_LSTM-Rolling", **attention_lstm_rolling_predict.predict_next_day()}
+        {"date": today, "model": "Attention_LSTM-Rolling", **attention_lstm_predict.predict_next_day()}
     )
     results.append(
         {"date": today, "model": "XGBoost-Rolling", **XGBoost_predict.predict_next_day()}

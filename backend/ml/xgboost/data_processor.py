@@ -4,12 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from ..data_merge import create_merged_dataset
-from .constant import (
-    PRED_TRUE_DIR,
-    LOOK_BACK,
-    PRED_TRUE_CSV,
-    SCALER_DIR,
-)
+from .constant import (PRED_TRUE_DIR, LOOK_BACK, PRED_TRUE_CSV, SCALER_DIR)
 
 class DataProcessor:
     def __init__(self):
@@ -44,9 +39,7 @@ class DataProcessor:
         return joblib.load(scaler_path)
 
     # XGBoost를 위해 시퀀스를 2D (LOOK_BACK * Features)로 평탄화
-    def create_sequences(
-        self, X: np.ndarray, y: np.ndarray, seq_len: int, y_index=None
-    ):
+    def create_sequences(self, X: np.ndarray, y: np.ndarray, seq_len: int, y_index=None):
         Xs, ys, idxs = [], [], []
         for i in range(len(X) - seq_len):
             Xs.append(X[i : i + seq_len].flatten())
@@ -69,7 +62,6 @@ class DataProcessor:
         data = data[keep_cols]
         
         self.add_indicators(data=data, target=target)
-
         return data
 
     def get_sequence_data(self, target: str):
@@ -85,15 +77,10 @@ class DataProcessor:
         features_scaled = feature_scaler.fit_transform(X)
 
         os.makedirs(SCALER_DIR, exist_ok=True)
-        joblib.dump(
-            target_scaler, os.path.join(SCALER_DIR, f"{target}_target_scaler.pkl")
-        )
-        joblib.dump(
-            feature_scaler, os.path.join(SCALER_DIR, f"{target}_feature_scaler.pkl")
-        )
+        joblib.dump(target_scaler, os.path.join(SCALER_DIR, f"{target}_target_scaler.pkl"))
+        joblib.dump(feature_scaler, os.path.join(SCALER_DIR, f"{target}_feature_scaler.pkl"))
 
         X_seq, y_seq, y_idxs = self.create_sequences(
             X=features_scaled, y=target_scaled, seq_len=LOOK_BACK, y_index=y.index
         )
-
         return X_seq, y_seq, y_idxs

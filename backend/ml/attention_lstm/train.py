@@ -6,10 +6,11 @@ import tensorflow as tf
 
 from itertools import product
 from .data_processor import DataProcessor
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.models import load_model
+from keras.optimizers import Adam
+from keras.models import load_model
+from .predict import predict_next_day
 from .model import AttentionLSTM, AttentionLayer
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.callbacks import EarlyStopping
 from sklearn.metrics import mean_absolute_percentage_error, mean_squared_error, r2_score
 from .constant import (
     BASE_DIR,
@@ -28,11 +29,12 @@ def evaluate_predictions(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
     }
 
 # 롤링 윈도우 방식의 인덱스 생성
-def rolling_split_index(total_len, train_size=1500, test_size=300):
-    for start in range(0, total_len - train_size - test_size + 1, test_size):
+def rolling_split_index(total_len, train_size=1200, test_size=300):
+    for start in range(0, total_len - train_size, test_size):
+        end = min(start + train_size + test_size, total_len)
         yield (
             np.arange(start, start + train_size),
-            np.arange(start + train_size, start + train_size + test_size),
+            np.arange(start + train_size, end),
         )
 
 # 최적의 하이퍼파라미터 탐색
@@ -98,6 +100,7 @@ def train():
 
     for target in targets:
         model_path = MODEL_DIR / f"{target}{KERAS_FILE_TEMPLATE}"
+        
         if model_path.exists():
             print(f"✅ {target.upper()} 모델 파일이 이미 존재해 학습 생략.")
             if target in existing_results:
@@ -129,7 +132,7 @@ def train():
                     X_train, y_train, X_test, y_test, num_features
                 )
                 if best_params is None:
-                    best_params = (150, 0.3, 0.001, 32) 
+                    best_params = (150, 0.2, 0.001, 32)
                 print(
                     f"최적 하이퍼파라미터: LSTM Units={best_params[0]}, Dropout={best_params[1]}, LR={best_params[2]}, Batch Size={best_params[3]}"
                 )
@@ -143,7 +146,7 @@ def train():
             )
 
             early_stopping = EarlyStopping(
-                monitor="val_loss", patience=10, restore_best_weights=True
+                monitor="val_loss", patience=3, restore_best_weights=True
             )
 
             # 학습
@@ -194,7 +197,7 @@ def train():
             X_seq,
             y_seq,
             epochs=50,
-            batch_size=batch_size,
+            batch_size=32,
             verbose=0,
         )
 
@@ -210,6 +213,16 @@ def train():
         }
         results[target] = {"best_params": best_params_dict, "metrics": metrics}
 
+        # # 디버깅 메세지
+        # print(f"데이터 시퀀스 최대 날짜: {y_idxs.max()}")
+        # print(f"롤링 윈도우 마지막 인덱스: {train_idx[-1]}, {test_idx[-1]}")
+        # print(f"최종 저장된 데이터 최대 날짜: {y_idxs_concat.max()}")
+
+    # 학습 완료 후 1일 예측값 생성 및 누적 저장
+    print("1일 후 예측값 생성 중")
+    predict_next_day()
+
+    # 최종 결과 저장
     with open(results_file, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=4)
     print("모든 학습/결과 처리 완료.")

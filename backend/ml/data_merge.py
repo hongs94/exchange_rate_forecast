@@ -8,7 +8,7 @@ def get_cached_dataset():
     db = MongoDB.get_database()
 
     try:
-        # 1. 종속변수 (환율) 가져오기 및 병합
+        # 종속변수 (환율) 가져오기 및 병합
         usd = import_from_db(db["usd"])
         eur = import_from_db(db["eur"])
         jpy = import_from_db(db["jpy(100)"]).rename(columns={"jpy(100)": "jpy"})
@@ -20,7 +20,7 @@ def get_cached_dataset():
         cny = import_from_db(db["cny"])
         cny_merged = pd.concat([usd_cny, cny], axis=0).reset_index(drop=True)
 
-        # 2. 독립변수 데이터 가져오기 및 병합
+        # 독립변수 데이터 가져오기 및 병합
         vix = import_from_db(db["vix"])
         dxy = import_from_db(db["dxy"])
         wti = import_from_db(db["wti"])

@@ -35,11 +35,11 @@ jobs:
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           MONGO_DB_NAME: ${{ secrets.MONGO_DB_NAME }}
-        run: python -m ml.collector
+        run: python -m backend.ml.collector
         
 
       - name: Run predictor.py
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           MONGO_DB_NAME: ${{ secrets.MONGO_DB_NAME }}
-        run: python -m ml.predictor
+        run: python -m backend.ml.predictor

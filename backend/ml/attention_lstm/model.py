@@ -1,7 +1,8 @@
 import tensorflow as tf
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import (Layer, Input, LSTM, Dense, Dropout, Bidirectional)
-from tensorflow.keras import backend as K
+
+from keras.models import Model
+from keras.layers import (Layer, Input, LSTM, Dense, Dropout, Bidirectional)
+from keras import backend as K
 
 class AttentionLayer(Layer):
     def __init__(self, **kwargs):
@@ -46,5 +47,4 @@ def AttentionLSTM(num_features, lstm_units=150, dropout_rate=0.3, seq_len=60):
     dropout_output = Dropout(rate=dropout_rate)(attention_output)
     outputs = Dense(1)(dropout_output)
     model = Model(inputs=inputs, outputs=outputs)
-    
     return model

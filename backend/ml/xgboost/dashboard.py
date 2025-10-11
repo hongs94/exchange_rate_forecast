@@ -126,7 +126,7 @@ async def train() -> HTMLResponse:
                     x=accumulated_filtered.index,
                     y=accumulated_filtered[tgt],
                     mode="lines+markers",
-                    name=f"{tgt.upper()} 1일 후 누적 예측값",
+                    name=f"{tgt.upper()} 누적 예측값",
                     line=dict(color='red', dash="dot")),
                 row=i,
                 col=1,
@@ -215,6 +215,5 @@ async def train_visual() -> HTMLResponse:
 
 if __name__ == "__main__":
     import uvicorn
-
     print(os.getcwd())
     uvicorn.run("dashboard:app", host="127.0.0.1", port=8000, reload=True)
