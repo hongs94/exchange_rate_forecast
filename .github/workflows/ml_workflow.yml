@@ -46,16 +46,6 @@ jobs:
           echo "collector.py 실행"
           python -m ml.collector
 
-      # predictor.py 실행
-      - name: Run predictor.py
-        env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          MONGO_DB_NAME: ${{ secrets.MONGO_DB_NAME }}
-          PYTHONPATH: ./backend 
-        run: |
-          echo "predictor.py 실행"
-          python -m ml.predictor
-
       # 실행 완료 로그
       - name: Job completed
         run: echo "ML daily workflow 완료"
