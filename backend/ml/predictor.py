@@ -1,10 +1,10 @@
 import pandas as pd
-import ml.lstm_mha.predict as lstm_predict
-import ml.xgboost.predict as XGBoost_predict
-import ml.attention_lstm.predict as attention_lstm_predict
 
 from datetime import datetime
 from .database import MongoDB
+from .lstm_mha import predict as lstm_predict
+from .xgboost import predict as XGBoost_predict
+from .attention_lstm import predict as attention_lstm_predict
 
 def insert_predicted_price():
 
