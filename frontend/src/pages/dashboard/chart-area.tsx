@@ -37,6 +37,9 @@ export function ChartArea({ visibleItems }: ChartAreaProps) {
     const allDatesSet = new Set<string>();
     data.real_prices.forEach((p: any) => allDatesSet.add(p.date));
     data.predicted_prices.forEach((p: any) => allDatesSet.add(p.date));
+    
+    data.final_predictions?.forEach((p: any) => allDatesSet.add(p.date));
+
     const allDates = Array.from(allDatesSet).sort();
     const filteredDates = period === "recent" ? allDates.slice(-30) : allDates;
 
@@ -54,7 +57,7 @@ export function ChartArea({ visibleItems }: ChartAreaProps) {
       hidden: visibleItems[`${currency.toUpperCase()} - Real`] === false,
     });
 
-    // SMA/EMA
+    // MA/EMA
     INDICATOR_COLORS.forEach((ind) => {
       const map = new Map(data.real_prices.map((p: any) => [p.date, p[ind.key]]));
       datasets.push({
@@ -82,6 +85,22 @@ export function ChartArea({ visibleItems }: ChartAreaProps) {
       pointStyle: "triangle",
       hidden: visibleItems[`Predicted (${model})`] === false,
     });
+
+    // 예측 누적값
+    if (data.final_predictions && data.final_predictions.length > 0) {
+      const finalPredictionMap = new Map(data.final_predictions.map((p: any) => [p.date, p[currency]]));
+
+      datasets.push({
+        label: `예측 누적값 (${model})`,
+        data: filteredDates.map((d) => finalPredictionMap.get(d) ?? null),
+        borderColor: "#22c55e",
+        backgroundColor: "#22c55e",
+        tension: 0,
+        pointRadius: 8,
+        pointStyle: "star",
+        hidden: visibleItems[`예측 누적값 (${model})`] === false,
+      });
+    }
 
     return { labels: filteredDates, datasets };
   }, [data, currency, model, period, visibleItems]);

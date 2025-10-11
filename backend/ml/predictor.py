@@ -13,13 +13,13 @@ def insert_predicted_price():
     today = datetime.now().strftime("%Y-%m-%d")
 
     results.append(
-        {"date": today, "model": "LSTM-Rolling", **lstm_predict.predict_next_day()}
+        {"date": today, "model": "LSTM", **lstm_predict.predict_next_day()}
     )
     results.append(
-        {"date": today, "model": "Attention_LSTM-Rolling", **attention_lstm_predict.predict_next_day()}
+        {"date": today, "model": "Attention_LSTM", **attention_lstm_predict.predict_next_day()}
     )
     results.append(
-        {"date": today, "model": "XGBoost-Rolling", **XGBoost_predict.predict_next_day()}
+        {"date": today, "model": "XGBoost", **XGBoost_predict.predict_next_day()}
     )
 
     df = pd.DataFrame(results)

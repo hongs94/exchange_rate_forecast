@@ -5,20 +5,16 @@ import pandas as pd
 import tensorflow as tf
 
 from itertools import product
-from .data_processor import DataProcessor
-from keras.optimizers import Adam
-from keras.models import load_model
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.models import load_model
 from .predict import predict_next_day
+from .data_processor import DataProcessor
+from tensorflow.keras.callbacks import EarlyStopping
 from .model import AttentionLSTM, AttentionLayer
-from keras.callbacks import EarlyStopping
 from sklearn.metrics import mean_absolute_percentage_error, mean_squared_error, r2_score
-from .constant import (
-    BASE_DIR,
-    LOOK_BACK,
-    MODEL_DIR,
-    PRED_TRUE_DIR,
-    KERAS_FILE_TEMPLATE,
-)
+from ..constant import (BASE_DIR, LOOK_BACK, MODEL_DIR, PRED_TRUE_DIR, KERAS_FILE_TEMPLATE_AL)
+
+MODEL_NAME = "attention_lstm"
 
 # 성능지표 계산
 def evaluate_predictions(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
@@ -99,7 +95,7 @@ def train():
             existing_results = json.load(f)
 
     for target in targets:
-        model_path = MODEL_DIR / f"{target}{KERAS_FILE_TEMPLATE}"
+        model_path = MODEL_DIR / f"{target}{KERAS_FILE_TEMPLATE_AL}"
         
         if model_path.exists():
             print(f"✅ {target.upper()} 모델 파일이 이미 존재해 학습 생략.")
@@ -181,11 +177,11 @@ def train():
             index=y_idxs_concat,
         )
         os.makedirs(PRED_TRUE_DIR, exist_ok=True)
-        pred_df.to_csv(PRED_TRUE_DIR / f"{target}_pred_true.csv")
-        print(f"저장: {target}_pred_true.csv")
+        pred_df.to_csv(PRED_TRUE_DIR / f"{target}_{MODEL_NAME}_pred_true.csv")
+        print(f"저장: {target}_{MODEL_NAME}_pred_true.csv")
 
         print("전체 데이터로 최종 모델 학습 및 저장")
-        
+
         # 최종 모델 생성
         final_model = AttentionLSTM(num_features, lstm_units, dropout_rate, seq_len=LOOK_BACK)
         final_model.compile(

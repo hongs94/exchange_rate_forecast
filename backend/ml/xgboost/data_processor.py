@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from ..data_merge import create_merged_dataset
-from .constant import (PRED_TRUE_DIR, LOOK_BACK, PRED_TRUE_CSV, SCALER_DIR)
+from ..constant import (PRED_TRUE_DIR, LOOK_BACK, PRED_TRUE_CSV, SCALER_DIR)
 
 class DataProcessor:
     def __init__(self):

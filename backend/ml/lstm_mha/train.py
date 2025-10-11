@@ -9,7 +9,9 @@ from .model import build_model
 from .data_processor import DataProcessor
 from .predict import predict_next_day
 from sklearn.metrics import mean_absolute_percentage_error, mean_squared_error, r2_score
-from .constant import (BASE_DIR, LOOK_BACK, MODEL_DIR, PRED_TRUE_DIR, KERAS_FILE_TEMPLATE)
+from ..constant import (BASE_DIR, LOOK_BACK, MODEL_DIR, PRED_TRUE_DIR, KERAS_FILE_TEMPLATE_L)
+
+MODEL_NAME = "lstm"
 
 # 성능지표 계산
 def evaluate_predictions(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
@@ -80,7 +82,7 @@ def train():
             existing_results = json.load(f)
 
     for target in targets:
-        model_path = MODEL_DIR / f"{target}{KERAS_FILE_TEMPLATE}"
+        model_path = MODEL_DIR / f"{target}{KERAS_FILE_TEMPLATE_L}"
         
         # 모델 파일 존재하면 학습 건너뛰기
         if model_path.exists():
@@ -143,8 +145,8 @@ def train():
             index=y_idxs_concat,
         )
         os.makedirs(PRED_TRUE_DIR, exist_ok=True)
-        pred_df.to_csv(PRED_TRUE_DIR / f"{target}_pred_true.csv")
-        print(f"저장: {target}_pred_true.csv")
+        pred_df.to_csv(PRED_TRUE_DIR / f"{target}_{MODEL_NAME}_pred_true.csv")
+        print(f"저장: {target}_{MODEL_NAME}_pred_true.csv")
 
         # 전체 데이터로 최종 모델 학습 및 저장
         print("전체 데이터로 최종 모델 학습 및 저장")
@@ -159,7 +161,7 @@ def train():
         )
 
         os.makedirs(MODEL_DIR, exist_ok=True)
-        final_model.save(MODEL_DIR / f"{target}{KERAS_FILE_TEMPLATE}")
+        final_model.save(MODEL_DIR / f"{target}{KERAS_FILE_TEMPLATE_L}")
 
         # 학습 결과 저장
         best_params_dict = {

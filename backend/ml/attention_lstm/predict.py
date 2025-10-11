@@ -3,13 +3,17 @@ import json
 import numpy as np
 import pandas as pd
 
+from pathlib import Path
 from .model import AttentionLayer
 from keras.models import load_model
 from .data_processor import DataProcessor
-from .constant import (LOOK_BACK, MODEL_DIR, BASE_DIR, KERAS_FILE_TEMPLATE, PRED_TRUE_DIR, ACCUMULATED_PRED_CSV) 
+from ..constant import (LOOK_BACK, KERAS_FILE_TEMPLATE_AL, PRED_TRUE_DIR, ACCUMULATED_PRED_CSV) 
 
 def load_model_keras(target: str):
-    model_path = MODEL_DIR / f"{target}{KERAS_FILE_TEMPLATE}"
+    current_dir = Path(__file__).resolve().parent
+    local_model_dir = current_dir / "models"
+
+    model_path = local_model_dir / f"{target}{KERAS_FILE_TEMPLATE_AL}"
     model = load_model(model_path, custom_objects={'AttentionLayer': AttentionLayer})
     return model
 

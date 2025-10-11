@@ -1,8 +1,7 @@
 import tensorflow as tf
 
-from keras.models import Model
-from keras.layers import (Layer, Input, LSTM, Dense, Dropout, Bidirectional)
-from keras import backend as K
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import (Layer, Input, LSTM, Dense, Dropout, Bidirectional)
 
 class AttentionLayer(Layer):
     def __init__(self, **kwargs):
@@ -21,13 +20,11 @@ class AttentionLayer(Layer):
         super(AttentionLayer, self).build(input_shape)
 
     def call(self, x):
-        score_input = K.dot(x, self.W)
-        score_input = K.tanh(score_input)
-        score = K.dot(score_input, self.u)
-
-        weights = K.softmax(score, axis=1)
-        
-        context_vector = K.sum(x * weights, axis=1)
+        score_input = tf.matmul(x, self.W)
+        score_input = tf.tanh(score_input)
+        score = tf.matmul(score_input, self.u)
+        weights = tf.nn.softmax(score, axis=1)
+        context_vector = tf.reduce_sum(x * weights, axis=1)
         return context_vector
 
     def get_config(self):

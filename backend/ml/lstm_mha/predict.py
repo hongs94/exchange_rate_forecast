@@ -2,11 +2,15 @@ import os
 import keras
 import pandas as pd
 
+from pathlib import Path
 from .data_processor import DataProcessor
-from .constant import (LOOK_BACK, MODEL_DIR, KERAS_FILE_TEMPLATE, PRED_TRUE_DIR, ACCUMULATED_PRED_CSV)
+from ..constant import (LOOK_BACK, KERAS_FILE_TEMPLATE_L, PRED_TRUE_DIR, ACCUMULATED_PRED_CSV)
 
 def load_model(target: str):
-    model_path = MODEL_DIR / f"{target}{KERAS_FILE_TEMPLATE}"
+    current_dir = Path(__file__).resolve().parent
+    local_model_dir = current_dir / "models"
+
+    model_path = local_model_dir / f"{target}{KERAS_FILE_TEMPLATE_L}"
     return keras.models.load_model(
         model_path, compile=False
     )

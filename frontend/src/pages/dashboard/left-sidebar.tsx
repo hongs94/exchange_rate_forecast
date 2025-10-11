@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useChartOptionsStore } from "@/store/chartOptionsStore";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCurrencyData, INDICATOR_COLORS, CURRENCY_OPTIONS } from "@/lib/chart-data";
+import {cn} from "@/lib/utils";
 
 interface LeftSidebarProps {
   isOpen: boolean;
@@ -25,8 +26,9 @@ export function LeftSidebar({ isOpen, visibleItems, setVisibleItems }: LeftSideb
   useEffect(() => {
     if (!data) return;
     const items = [
-      `${currency.toUpperCase()} - Real`,
-      `Predicted (${model})`,
+      `${currency.toUpperCase()} - 실제값`,
+      `예측값`,
+      `1일 후 예측값`,
       ...INDICATOR_COLORS.map((i) => i.key),
     ];
     const obj: Record<string, boolean> = {};
@@ -58,9 +60,9 @@ export function LeftSidebar({ isOpen, visibleItems, setVisibleItems }: LeftSideb
                 <SelectValue placeholder="모델 선택" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="LSTM-Rolling">LSTM-Rolling</SelectItem>
-                <SelectItem value="Attention_LSTM-Rolling">Attention_LSTM-Rolling</SelectItem>
-                <SelectItem value="XGBoost-Rolling">XGBoost-Rolling</SelectItem>
+                <SelectItem value="LSTM">LSTM</SelectItem>
+                <SelectItem value="Attention_LSTM">Attention_LSTM</SelectItem>
+                <SelectItem value="XGBoost">XGBoost</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -108,6 +110,7 @@ export function LeftSidebar({ isOpen, visibleItems, setVisibleItems }: LeftSideb
                 {[
                   { label: `${currency.toUpperCase()}`, color: "#36A2EB" },
                   { label: `예측값`, color: "#ef4444" },
+                  { label: `1일 후 예측값`, color: "#22c55e" },
                   ...INDICATOR_COLORS.map((i) => ({ label: i.key, color: i.color })),
                 ].map((item) => (
                   <label key={item.label} className="flex items-center gap-2">

@@ -3,12 +3,16 @@ import joblib
 import numpy as np
 import pandas as pd
 
+from pathlib import Path
 from datetime import datetime
 from .data_processor import DataProcessor
-from .constant import (LOOK_BACK, MODEL_DIR, MODEL_FILE_TEMPLATE, PRED_TRUE_DIR, ACCUMULATED_PRED_CSV)
+from ..constant import (LOOK_BACK, MODEL_DIR, MODEL_FILE_TEMPLATE, PRED_TRUE_DIR, ACCUMULATED_PRED_CSV)
 
 def load_model(target: str):
-    model_path = MODEL_DIR / f"{target}{MODEL_FILE_TEMPLATE}"
+    current_dir = Path(__file__).resolve().parent
+    local_model_dir = current_dir / "models"
+
+    model_path = local_model_dir / f"{target}{MODEL_FILE_TEMPLATE}"
     return joblib.load(model_path)
 
 def predict_next_day():

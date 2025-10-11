@@ -12,7 +12,9 @@ from .data_processor import DataProcessor
 from .predict import predict_next_day
 from xgboost import XGBRegressor
 from sklearn.metrics import mean_absolute_percentage_error, mean_squared_error, r2_score
-from .constant import (BASE_DIR, LOOK_BACK, MODEL_DIR, PRED_TRUE_DIR, MODEL_FILE_TEMPLATE)
+from ..constant import (BASE_DIR, LOOK_BACK, MODEL_DIR, PRED_TRUE_DIR, MODEL_FILE_TEMPLATE)
+
+MODEL_NAME = "xgboost"
 
 # 성능지표 계산
 def evaluate_predictions(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
@@ -136,8 +138,8 @@ def train():
             index=y_idxs_concat,
         )
         os.makedirs(PRED_TRUE_DIR, exist_ok=True)
-        pred_df.to_csv(PRED_TRUE_DIR / f"{target}_pred_true.csv")
-        print(f"저장: {target}_pred_true.csv")
+        pred_df.to_csv(PRED_TRUE_DIR / f"{target}_{MODEL_NAME}_pred_true.csv")
+        print(f"저장: {target}_{MODEL_NAME}_pred_true.csv")
 
         # 전체 데이터로 최종 모델 학습 및 저장
         print("전체 데이터로 최종 모델 학습 및 저장")
