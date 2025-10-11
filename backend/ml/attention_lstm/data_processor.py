@@ -1,22 +1,25 @@
-import os
 import joblib
 import numpy as np
 import pandas as pd
 
+from pathlib import Path
 from sklearn.preprocessing import MinMaxScaler
 from ..data_merge import create_merged_dataset
 from ..constant import (PRED_TRUE_DIR, LOOK_BACK, PRED_TRUE_CSV, SCALER_DIR)
 
 class DataProcessor:
     def __init__(self):
+        # 데이터 병합 및 로드
         self.origin_data = create_merged_dataset()
         
+        # 새로운 Feature 생성 (금리/금리 스프레드)
         self.origin_data["kr_us_diff"] = (self.origin_data["kr_rate"] - self.origin_data["us_rate"])
         self.origin_data["us_jp_diff"] = (self.origin_data["dgs10"] - self.origin_data["jpy10"])
         self.origin_data["us_eu_diff"] = (self.origin_data["dgs10"] - self.origin_data["eur10"])
         
         self.targets = ["usd", "cny", "jpy", "eur"]
 
+        # 통화별 특징 변수 정의
         self.feature_map = {
             "usd": ["dgs10", "vix", "dxy", "kr_us_diff", "kr_rate", "us_rate"],
             "cny": ["cny_fx_reserves", "cny_trade_bal", "wti", "vix"],
@@ -31,11 +34,11 @@ class DataProcessor:
             data[f"EMA_{p}"] = data[target].ewm(span=p, adjust=False).mean()
         data.dropna(inplace=True)
 
-    def get_target_scaler(self, target: str):
+    def get_target_scaler(self, target: str) -> MinMaxScaler:
         scaler_path = SCALER_DIR / f"{target}_target_scaler.pkl"
         return joblib.load(scaler_path)
 
-    def get_feature_scaler(self, target: str):
+    def get_feature_scaler(self, target: str) -> MinMaxScaler:
         scaler_path = SCALER_DIR / f"{target}_feature_scaler.pkl"
         return joblib.load(scaler_path)
 
@@ -53,7 +56,7 @@ class DataProcessor:
             return np.array(Xs), np.array(ys), np.array(idxs)
         return np.array(Xs), np.array(ys)
 
-    def get_proceed_data(self, target) -> pd.DataFrame:
+    def get_proceed_data(self, target: str) -> pd.DataFrame:
         data = self.origin_data.copy()
 
         features_for_target = self.feature_map.get(target)
@@ -79,9 +82,10 @@ class DataProcessor:
         target_scaled = target_scaler.fit_transform(y.to_frame())
         features_scaled = feature_scaler.fit_transform(X)
 
-        os.makedirs(SCALER_DIR, exist_ok=True)
-        joblib.dump(target_scaler, os.path.join(SCALER_DIR, f"{target}_target_scaler.pkl"))
-        joblib.dump(feature_scaler, os.path.join(SCALER_DIR, f"{target}_feature_scaler.pkl"))
+        SCALER_DIR.mkdir(parents=True, exist_ok=True)
+        
+        joblib.dump(target_scaler, SCALER_DIR / f"{target}_target_scaler.pkl")
+        joblib.dump(feature_scaler, SCALER_DIR / f"{target}_feature_scaler.pkl")
 
         X_seq, y_seq, y_idxs = self.create_sequences(
             X=features_scaled, y=target_scaled, seq_len=LOOK_BACK, y_index=y.index

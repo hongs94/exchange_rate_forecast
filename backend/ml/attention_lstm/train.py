@@ -12,7 +12,9 @@ from .data_processor import DataProcessor
 from tensorflow.keras.callbacks import EarlyStopping
 from .model import AttentionLSTM, AttentionLayer
 from sklearn.metrics import mean_absolute_percentage_error, mean_squared_error, r2_score
-from ..constant import (BASE_DIR, LOOK_BACK, MODEL_DIR, PRED_TRUE_DIR, KERAS_FILE_TEMPLATE_AL)
+from ..constant import(
+    BASE_DIR, LOOK_BACK, MODEL_DIR, PRED_TRUE_DIR, KERAS_FILE_TEMPLATE_AL, 
+    RESULTS_FILE_TEMPLATE, PRED_TRUE_CSV_TEMPLATE)
 
 MODEL_NAME = "attention_lstm"
 
@@ -25,7 +27,7 @@ def evaluate_predictions(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
     }
 
 # 롤링 윈도우 방식의 인덱스 생성
-def rolling_split_index(total_len, train_size=1200, test_size=300):
+def rolling_split_index(total_len: int, train_size: int = 1200, test_size: int = 300):
     for start in range(0, total_len - train_size, test_size):
         end = min(start + train_size + test_size, total_len)
         yield (
@@ -34,7 +36,7 @@ def rolling_split_index(total_len, train_size=1200, test_size=300):
         )
 
 # 최적의 하이퍼파라미터 탐색
-def find_best_hyperparams(X_train, y_train, X_val, y_val, num_features):
+def find_best_hyperparams(X_train: np.ndarray, y_train: np.ndarray, X_val: np.ndarray, y_val: np.ndarray, num_features: int) -> tuple:
     hyperparams_candidates = {
         "lstm_units": [100, 150],
         "dropout_rate": [0.2, 0.3],
@@ -49,7 +51,7 @@ def find_best_hyperparams(X_train, y_train, X_val, y_val, num_features):
     for lstm_units, dropout_rate, learning_rate, batch_size in product(
         *hyperparams_candidates.values()
     ):
-        # Keras 모델 생성 시 LOOK_BACK 상수 전달
+        # Keras 모델 생성
         model = AttentionLSTM(num_features, lstm_units, dropout_rate, seq_len=LOOK_BACK)
         
         # 모델 컴파일
@@ -57,7 +59,7 @@ def find_best_hyperparams(X_train, y_train, X_val, y_val, num_features):
             optimizer=Adam(learning_rate=learning_rate), loss="mse"
         )
 
-        # Early Stopping 설정: val_loss가 3 epoch 동안 개선되지 않으면 중단
+        # Early Stopping 설정
         early_stopping = EarlyStopping(
             monitor="val_loss", patience=3, restore_best_weights=True
         )
@@ -82,17 +84,22 @@ def find_best_hyperparams(X_train, y_train, X_val, y_val, num_features):
 
     return best_params
 
-
-def train():
+def train_model():
     data_processor = DataProcessor()
     targets = data_processor.targets
     results = {}
 
-    results_file = BASE_DIR / "train_results.json"
+    # 모델별 JSON 결과 파일 경로 설정
+    results_path = PRED_TRUE_DIR.parent / RESULTS_FILE_TEMPLATE.format(model_name=MODEL_NAME)
+    
     existing_results = {}
-    if results_file.exists():
-        with open(results_file, "r", encoding="utf-8") as f:
-            existing_results = json.load(f)
+    if results_path.exists():
+        try:
+            with open(results_path, "r", encoding="utf-8") as f:
+                existing_results = json.load(f)
+        except json.JSONDecodeError:
+            print(f"경고: {results_path.name} 파일 로드 중 오류 발생. 무시하고 진행합니다.")
+
 
     for target in targets:
         model_path = MODEL_DIR / f"{target}{KERAS_FILE_TEMPLATE_AL}"
@@ -118,10 +125,12 @@ def train():
         print(f"✅ {target.upper()} 모델 학습 (총 {total_len}개 시퀀스)")
         num_features = X_seq.shape[2]
 
+        # 롤링 윈도우를 이용한 학습 및 검증
         for i, (train_idx, test_idx) in enumerate(rolling_split_index(total_len)):
             X_train, y_train = X_seq[train_idx], y_seq[train_idx]
             X_test, y_test = X_seq[test_idx], y_seq[test_idx]
             
+            # 첫 번째 롤링 윈도우에서 최적의 하이퍼파라미터 탐색
             if i == 0:
                 print("최적 하이퍼파라미터 탐색 중")
                 best_params = find_best_hyperparams(
@@ -135,7 +144,7 @@ def train():
 
             lstm_units, dropout_rate, learning_rate, batch_size = best_params
 
-            print(f"롤링 윈도우 {i + 1} 학습 및 예측")
+            print(f"롤링 윈도우 {i + 1} 학습 및 예측 진행")
             model = AttentionLSTM(num_features, lstm_units, dropout_rate, seq_len=LOOK_BACK)
             model.compile(
                 optimizer=Adam(learning_rate=learning_rate), loss="mse"
@@ -163,6 +172,7 @@ def train():
             y_true_all.append(y_test)
             y_idxs_all.append(y_idxs[test_idx])
 
+        # 롤링 윈도우 결과 결합 및 성능 평가
         y_pred_concat = np.concatenate(y_preds_all)
         y_true_concat = np.concatenate(y_true_all)
         y_idxs_concat = np.concatenate(y_idxs_all)
@@ -172,23 +182,24 @@ def train():
         y_pred_inv = target_scaler.inverse_transform(y_pred_concat)
         metrics = evaluate_predictions(y_true_inv, y_pred_inv)
 
+        # 훈련/검증 예측값 DataFrame 생성 및 저장
         pred_df = pd.DataFrame(
             {"true": y_true_inv.flatten(), "pred": y_pred_inv.flatten()},
             index=y_idxs_concat,
         )
         os.makedirs(PRED_TRUE_DIR, exist_ok=True)
-        pred_df.to_csv(PRED_TRUE_DIR / f"{target}_{MODEL_NAME}_pred_true.csv")
+        pred_df.to_csv(PRED_TRUE_DIR / PRED_TRUE_CSV_TEMPLATE.format(target=target, model_name=MODEL_NAME))
         print(f"저장: {target}_{MODEL_NAME}_pred_true.csv")
 
         print("전체 데이터로 최종 모델 학습 및 저장")
 
-        # 최종 모델 생성
+        # 전체 데이터로 최종 모델 생성 및 학습
         final_model = AttentionLSTM(num_features, lstm_units, dropout_rate, seq_len=LOOK_BACK)
         final_model.compile(
             optimizer=Adam(learning_rate=learning_rate), loss="mse"
         )
         
-        # 전체 데이터로 학습 (50 에포크, 검증 데이터 불필요)
+        # 전체 데이터로 학습
         final_model.fit(
             X_seq,
             y_seq,
@@ -209,19 +220,18 @@ def train():
         }
         results[target] = {"best_params": best_params_dict, "metrics": metrics}
 
-        # # 디버깅 메세지
-        # print(f"데이터 시퀀스 최대 날짜: {y_idxs.max()}")
-        # print(f"롤링 윈도우 마지막 인덱스: {train_idx[-1]}, {test_idx[-1]}")
-        # print(f"최종 저장된 데이터 최대 날짜: {y_idxs_concat.max()}")
-
     # 학습 완료 후 1일 예측값 생성 및 누적 저장
     print("1일 후 예측값 생성 중")
     predict_next_day()
 
-    # 최종 결과 저장
-    with open(results_file, "w", encoding="utf-8") as f:
+    # 모든 타겟에 대한 훈련이 끝난 후 메트릭을 JSON 파일로 저장
+    os.makedirs(PRED_TRUE_DIR.parent, exist_ok=True)
+    
+    # 모델별 JSON 파일 경로 설정 및 저장
+    with open(results_path, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=4)
+    print(f"메트릭 저장 완료: {results_path.name}")
     print("모든 학습/결과 처리 완료.")
 
 if __name__ == "__main__":
-    train()
+    train_model()
