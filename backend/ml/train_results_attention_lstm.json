@@ -1,0 +1,15 @@
+{
+    "eur": {
+        "best_params": {
+            "lstm_units": 150,
+            "dropout_rate": 0.3,
+            "learning_rate": 0.0005,
+            "batch_size": 64
+        },
+        "metrics": {
+            "rmse": 38.254908915454216,
+            "r2": 0.8059081853700517,
+            "mape": 2.0976051642886566
+        }
+    }
+}
