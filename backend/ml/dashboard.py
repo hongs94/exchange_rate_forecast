@@ -7,9 +7,10 @@ import plotly.graph_objects as go
 
 from pathlib import Path
 from fastapi import FastAPI, Query
+from sklearn.metrics import r2_score
 from plotly.subplots import make_subplots
 from fastapi.responses import HTMLResponse
-from ml.constant import (PRED_TRUE_DIR, RESULTS_FILE_TEMPLATE, PRED_TRUE_CSV_TEMPLATE, ACCUMULATED_PRED_CSV_TEMPLATE)
+from .constant import (PRED_TRUE_DIR, RESULTS_FILE_TEMPLATE, PRED_TRUE_CSV_TEMPLATE, ACCUMULATED_PRED_CSV_TEMPLATE)
 
 base_path = Path(__file__).resolve().parent
 ml_path = base_path.parent
@@ -354,8 +355,5 @@ async def get_dashboard(
     html_content = create_dashboard_html(model_name=model, selected_currency=currency)
     return HTMLResponse(content=html_content)
 
-from sklearn.metrics import r2_score
-
 if __name__ == "__main__":
     import uvicorn
-    print("대시보드 파일입니다.")
