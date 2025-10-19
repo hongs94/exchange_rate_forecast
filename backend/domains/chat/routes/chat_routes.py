@@ -3,8 +3,11 @@ from fastapi.responses import HTMLResponse
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
+
+# -------------------------------
 # 테스트용 HTML 페이지
-@router.get("/")
+# -------------------------------
+@router.get("")
 async def test_chat_page():
     return HTMLResponse("""
     <!DOCTYPE html>

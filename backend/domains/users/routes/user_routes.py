@@ -1,12 +1,13 @@
-from modules.mongodb import MongoDB
-from domains.users.models.user import User
 from fastapi import APIRouter, HTTPException, Request
-from domains.users.schemes.register_request import RegisterRequest
+
+from modules.mongodb import MongoDB
 from domains.users.services.auth_service import (
     get_session_id,
     get_user_info,
     hash_password,
 )
+from domains.users.models.user import User
+from domains.users.schemes.register_request import RegisterRequest
 
 router = APIRouter(prefix="/users", tags=["users"])
 

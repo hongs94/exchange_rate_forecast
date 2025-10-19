@@ -12,7 +12,7 @@ class MongoDB:
         if cls._client is None:
             cls._client = AsyncIOMotorClient(config.MONGO_URI)
             cls._db = cls._client[config.MONGO_DB_NAME]
-            log.info("✅ MongoDB 연결")
+            log.info("✅ MongoDB connected")
 
     @classmethod
     def close(cls):
@@ -21,13 +21,13 @@ class MongoDB:
             cls._client.close()
             cls._client = None
             cls._db = None
-            log.info("🛑 MongoDB 연결 종료")
+            log.info("🛑 MongoDB connection closed")
 
     @classmethod
     def get_database(cls) -> AsyncIOMotorDatabase:
         """DB 핸들 가져오기"""
         if cls._db is None:
             raise RuntimeError(
-                "❌ MongoDB 연결 실패. MongoDB.connect()를 호출 하셨습니까?"
+                "❌ MongoDB not connected. Did you forget to call MongoDB.connect()?"
             )
         return cls._db

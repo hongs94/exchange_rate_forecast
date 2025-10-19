@@ -1,12 +1,12 @@
-import re
 import json
-from uuid import uuid4
-from typing import Union
 from modules.logger import log
-from modules.redis import Redis
+import re
+from typing import Union
+from uuid import uuid4
 from fastapi import Request, WebSocket
 from passlib.context import CryptContext
 from domains.users.schemes.user_info import UserInfo
+from modules.redis import Redis
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SESSION_TTL = 3600  # 1 hour

@@ -1,12 +1,16 @@
+# -------------------------------
 # WebSocket Endpoint
-from modules.kafka import send_kafka_chat
+# -------------------------------
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+
+from modules.kafka import send_kafka_chat
 from domains.chat.services.chat_manager import ChatRoomManager
 from domains.users.services.auth_service import (
     get_session_id,
     get_user_info,
     refresh_session,
 )
+
 
 def register_chat_ws(app: FastAPI):
     @app.websocket("/ws/chat")

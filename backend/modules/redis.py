@@ -16,9 +16,9 @@ class Redis:
             # 연결 테스트
             try:
                 await cls._client.ping()
-                log.info("✅ Redis 연결")
+                log.info("✅ Redis connected")
             except Exception as e:
-                log.error(f"❌ Redis 연결 실패: {e}")
+                log.error(f"❌ Redis connection failed: {e}")
                 cls._client = None
                 raise
 
@@ -28,13 +28,13 @@ class Redis:
         if cls._client:
             await cls._client.close()
             cls._client = None
-            log.info("🛑 Redis 연결 종료")
+            log.info("🛑 Redis connection closed")
 
     @classmethod
     def get_client(cls) -> aioredis.Redis:
         """Redis 클라이언트 가져오기"""
         if cls._client is None:
             raise RuntimeError(
-                "❌ Redis 연결 실패. Redis.connect()를 호출 하셨습니까?"
+                "❌ Redis not connected. Did you forget to call Redis.connect()?"
             )
         return cls._client

@@ -10,7 +10,7 @@ interface ChartOptionsState {
 }
 
 export const useChartOptionsStore = create<ChartOptionsState>((set) => ({
-  model: "LSTM",
+  model: "XGBoost",
   setModel: (model) => set({ model }),
   currency: "usd",
   setCurrency: (currency) => set({ currency }),

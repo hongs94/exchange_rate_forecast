@@ -1,36 +1,34 @@
-import pandas as pd
-
 from datetime import datetime
+import pandas as pd
+import ml.lstm.predict as lstm_predict
+import ml.lstm_attention.predict as attention_lstm_rolling_predict
+import ml.xgboost.predict as XGBoost_predict
 from .database import MongoDB
-from .lstm_mha import predict as lstm_predict
-from .xgboost import predict as XGBoost_predict
-from .attention_lstm import predict as attention_lstm_predict
+
 
 def insert_predicted_price():
+    next_day = (datetime.now() + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
 
-    # 각 모델별 예측 결과에 index(모델명) 추가
-    results = []
-    today = datetime.now().strftime("%Y-%m-%d")
-
-    results.append(
-        {"date": today, "model": "LSTM", **lstm_predict.predict_next_day()}
-    )
-    results.append(
-        {"date": today, "model": "Attention_LSTM", **attention_lstm_predict.predict_next_day()}
-    )
-    results.append(
-        {"date": today, "model": "XGBoost", **XGBoost_predict.predict_next_day()}
-    )
+    results = [
+        {"date": next_day, "model": "LSTM", **lstm_predict.predict_next_day()},
+        {
+            "date": next_day,
+            "model": "LSTM_Attention",
+            **attention_lstm_rolling_predict.predict_next_day(),
+        },
+        {"date": next_day, "model": "XGBoost", **XGBoost_predict.predict_next_day()},
+    ]
 
     df = pd.DataFrame(results)
     df.set_index("date", inplace=True)
 
     print(df)
-    
+
     MongoDB.connect()
     db = MongoDB.get_database()
     db["predicted_price"].insert_many(df.reset_index().to_dict("records"))
     MongoDB.close()
+
 
 if __name__ == "__main__":
     insert_predicted_price()

@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useChartOptionsStore } from "@/store/chartOptionsStore";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCurrencyData, INDICATOR_COLORS, CURRENCY_OPTIONS } from "@/lib/chart-data";
-import {cn} from "@/lib/utils";
 
 interface LeftSidebarProps {
   isOpen: boolean;
@@ -26,9 +25,8 @@ export function LeftSidebar({ isOpen, visibleItems, setVisibleItems }: LeftSideb
   useEffect(() => {
     if (!data) return;
     const items = [
-      `${currency.toUpperCase()} - 실제값`,
-      `예측값`,
-      `1일 후 예측값`,
+      `${currency.toUpperCase()} - Real`,
+      `${model}`,
       ...INDICATOR_COLORS.map((i) => i.key),
     ];
     const obj: Record<string, boolean> = {};
@@ -44,9 +42,8 @@ export function LeftSidebar({ isOpen, visibleItems, setVisibleItems }: LeftSideb
 
   return (
     <aside
-      className={`bg-card border-r border-border transition-all duration-300 flex-shrink-0 h-full ${
-        isOpen ? "w-64" : "w-0 overflow-hidden"
-      }`}
+      className={`bg-card border-r border-border transition-all duration-300 flex-shrink-0 h-full ${isOpen ? "w-64" : "w-0 overflow-hidden"
+        }`}
     >
       <div className="p-4 space-y-4 w-64 h-full overflow-y-auto">
         <h3 className="font-medium text-foreground">차트 설정</h3>
@@ -54,15 +51,15 @@ export function LeftSidebar({ isOpen, visibleItems, setVisibleItems }: LeftSideb
         <div className="space-y-4">
           {/* 모델 선택 */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">모델 선택</label>
+            <label className="text-sm font-medium text-foreground">예측 모델 선택</label>
             <Select value={model} onValueChange={setModel}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="모델 선택" />
+                <SelectValue placeholder="예측 모델 선택" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="LSTM">LSTM</SelectItem>
-                <SelectItem value="Attention_LSTM">Attention_LSTM</SelectItem>
                 <SelectItem value="XGBoost">XGBoost</SelectItem>
+                <SelectItem value="LSTM">LSTM</SelectItem>
+                <SelectItem value="LSTM_Attention">LSTM_Attention</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -92,7 +89,7 @@ export function LeftSidebar({ isOpen, visibleItems, setVisibleItems }: LeftSideb
                 variant={period === "recent" ? "secondary" : "outline"}
                 onClick={() => setPeriod("recent")}
               >
-                최근
+                6개월
               </Button>
               <Button
                 variant={period === "all" ? "secondary" : "outline"}
@@ -109,8 +106,7 @@ export function LeftSidebar({ isOpen, visibleItems, setVisibleItems }: LeftSideb
               <CardContent className="flex flex-col gap-2">
                 {[
                   { label: `${currency.toUpperCase()}`, color: "#36A2EB" },
-                  { label: `예측값`, color: "#ef4444" },
-                  { label: `1일 후 예측값`, color: "#22c55e" },
+                  { label: `${model}`, color: "#ef4444" },
                   ...INDICATOR_COLORS.map((i) => ({ label: i.key, color: i.color })),
                 ].map((item) => (
                   <label key={item.label} className="flex items-center gap-2">

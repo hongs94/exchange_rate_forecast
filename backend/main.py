@@ -1,12 +1,11 @@
+from contextlib import asynccontextmanager
 import time
 import asyncio
-from contextlib import asynccontextmanager
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, Response, HTTPException, Request
+from fastapi.responses import JSONResponse
 
-from modules.redis import Redis
 from modules.mongodb import MongoDB
+from modules.redis import Redis
 
 from domains.chat.ws.chat_ws import register_chat_ws
 from domains.users.services.auth_service import (
@@ -22,10 +21,11 @@ from modules.kafka import (
     kafka_log_consumer,
 )
 
-from domains.chat.routes.chat_routes import router as chat_router
 from domains.users.routes.auth_routes import router as auth_router
 from domains.users.routes.user_routes import router as users_router
+from domains.chat.routes.chat_routes import router as chat_router
 from domains.dashboard.routes.dashboard_routes import router as dashboard_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -53,14 +53,6 @@ app.include_router(router=users_router)
 app.include_router(router=chat_router)
 app.include_router(router=dashboard_router)
 register_chat_ws(app=app)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # 프론트엔드 도메인
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 @app.exception_handler(HTTPException)
@@ -108,3 +100,9 @@ async def add_process_time_header(request: Request, call_next) -> Response:
             )
         )
     return response
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

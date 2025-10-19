@@ -1,0 +1,54 @@
+{
+    "usd": {
+        "best_params": {
+            "lstm_units": 150,
+            "dropout_rate": 0.2,
+            "learning_rate": 0.0005,
+            "batch_size": 32
+        },
+        "metrics": {
+            "rmse": 26.176545758590123,
+            "r2": 0.9308014512062073,
+            "mape": 1.5457091853022575
+        }
+    },
+    "cny": {
+        "best_params": {
+            "lstm_units": 100,
+            "dropout_rate": 0.2,
+            "learning_rate": 0.0005,
+            "batch_size": 32
+        },
+        "metrics": {
+            "rmse": 1.233931546289479,
+            "r2": 0.9800861477851868,
+            "mape": 0.4961085971444845
+        }
+    },
+    "jpy": {
+        "best_params": {
+            "lstm_units": 100,
+            "dropout_rate": 0.2,
+            "learning_rate": 0.0005,
+            "batch_size": 32
+        },
+        "metrics": {
+            "rmse": 12.15684245021605,
+            "r2": 0.9746221303939819,
+            "mape": 0.9317195042967796
+        }
+    },
+    "eur": {
+        "best_params": {
+            "lstm_units": 150,
+            "dropout_rate": 0.3,
+            "learning_rate": 0.001,
+            "batch_size": 32
+        },
+        "metrics": {
+            "rmse": 17.035669043961573,
+            "r2": 0.9142907857894897,
+            "mape": 0.9824246168136597
+        }
+    }
+}

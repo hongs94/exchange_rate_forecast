@@ -20,9 +20,10 @@ export function ChatSidebar({ isOpen }: ChatSidebarProps) {
   const [input, setInput] = useState("")
   const [wsConnected, setWsConnected] = useState(true)
   const ws = useRef<WebSocket | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    ws.current = new WebSocket("ws://localhost:8000/ws/chat")
+    ws.current = new WebSocket("/ws/chat")
     ws.current.onopen = () => setWsConnected(true)
     ws.current.onclose = () => setWsConnected(false)
     ws.current.onerror = () => setWsConnected(false)
@@ -42,6 +43,11 @@ export function ChatSidebar({ isOpen }: ChatSidebarProps) {
       ws.current?.close()
     }
   }, [])
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
 
   const handleSend = () => {
     const trimmed = input.trim()
@@ -81,6 +87,7 @@ export function ChatSidebar({ isOpen }: ChatSidebarProps) {
                   <span className={`text-xs ${msg.isMe ? "opacity-70" : "text-accent-foreground/70"}`}>{msg.time}</span>
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
         </div>

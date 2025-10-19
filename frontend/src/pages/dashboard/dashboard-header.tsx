@@ -12,7 +12,7 @@ export function DashboardHeader({ onToggleLeftSidebar, onToggleChatSidebar }: Da
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
-    fetch("http://localhost:8000/users/profile", {
+    fetch("/api/users/profile", {
       credentials: "include",
     })
       .then((res) => {
@@ -28,7 +28,7 @@ export function DashboardHeader({ onToggleLeftSidebar, onToggleChatSidebar }: Da
   }
 
   const handleLogout = async () => {
-    await fetch("http://localhost:8000/auth/logout", {
+    await fetch("/api/auth/logout", {
       method: "POST",
       credentials: "include",
     })

@@ -1,12 +1,15 @@
+# -------------------------------
 # ChatRoomManager
+# -------------------------------
+from datetime import datetime
 import json
 from typing import Dict
 from fastapi import WebSocket
-from datetime import datetime
 from modules.redis import Redis
 
 MAX_MSG = 100  # Redis 캐시 최대 메시지 수
 CHAT_REDIS_KEY = "chat"
+
 
 class ChatRoomManager:
     sockets: Dict[str, WebSocket] = {}
@@ -18,7 +21,10 @@ class ChatRoomManager:
         old_ws = cls.sockets.get(uid, None)
 
         if old_ws:
-            old_ws.close()
+            try:
+                await old_ws.close()
+            except RuntimeError:
+                pass
 
         cls.sockets[uid] = ws
 

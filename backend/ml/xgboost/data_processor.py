@@ -1,28 +1,26 @@
 import os
 import joblib
 import numpy as np
-import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
-from ..data_merge import create_merged_dataset
-from ..constant import (PRED_TRUE_DIR, LOOK_BACK, PRED_TRUE_CSV, SCALER_DIR)
+from ml.data_merge import create_merged_dataset
+from .constant import PRED_TRUE_DIR, LOOK_BACK, PRED_TRUE_CSV, SCALER_DIR, CURRENCIES
+import pandas as pd
+
 
 class DataProcessor:
     def __init__(self):
         self.origin_data = create_merged_dataset()
-        
-        self.origin_data["kr_us_diff"] = (self.origin_data["kr_rate"] - self.origin_data["us_rate"])
-        self.origin_data["us_jp_diff"] = (self.origin_data["dgs10"] - self.origin_data["jpy10"])
-        self.origin_data["us_eu_diff"] = (self.origin_data["dgs10"] - self.origin_data["eur10"])
-        
-        self.targets = ["usd", "cny", "jpy", "eur"]
+        self.origin_data["kr_us_diff"] = (
+            self.origin_data["kr_rate"] - self.origin_data["us_rate"]
+        )
+        self.origin_data["dgs_jpy_diff"] = (
+            self.origin_data["dgs10"] - self.origin_data["jpy10"]
+        )
+        self.origin_data["dgs_eur_diff"] = (
+            self.origin_data["dgs10"] - self.origin_data["eur10"]
+        )
+        self.targets = CURRENCIES
 
-        self.feature_map = {
-            "usd": ["dgs10", "vix", "dxy", "kr_us_diff", "kr_rate", "us_rate"],
-            "cny": ["cny_fx_reserves", "cny_trade_bal", "wti", "vix"],
-            "jpy": ["jpy10", "dgs10", "us_jp_diff", "vix"],
-            "eur": ["eur10", "dxy", "us_eu_diff", "vix"],
-        }
-    
     def add_indicators(self, data: pd.DataFrame, target: str):
         periods = [5, 20, 60, 120]
         for p in periods:
@@ -38,30 +36,59 @@ class DataProcessor:
         scaler_path = SCALER_DIR / f"{target}_feature_scaler.pkl"
         return joblib.load(scaler_path)
 
-    # XGBoost를 위해 시퀀스를 2D (LOOK_BACK * Features)로 평탄화
-    def create_sequences(self, X: np.ndarray, y: np.ndarray, seq_len: int, y_index=None):
+    def create_sequences(
+        self, X: np.ndarray, y: np.ndarray, seq_len: int, y_index=None
+    ):
         Xs, ys, idxs = [], [], []
         for i in range(len(X) - seq_len):
-            Xs.append(X[i : i + seq_len].flatten())
+            Xs.append(X[i : i + seq_len])
             ys.append(y[i + seq_len])
             if y_index is not None:
                 idxs.append(y_index[i + seq_len])
-        
         if y_index is not None:
             return np.array(Xs), np.array(ys), np.array(idxs)
         return np.array(Xs), np.array(ys)
-    
+
+    def save_predictions_csv(self, y_true, y_pred, target: str, index):
+        """
+        실제값과 예측값을 CSV로 저장합니다.
+        """
+        # 역변환
+        scaler = self.get_target_scaler(target=target)
+        y_true_inv = scaler.inverse_transform(y_true.reshape(-1, 1)).flatten()
+        y_pred_inv = scaler.inverse_transform(y_pred.reshape(-1, 1)).flatten()
+
+        df = pd.DataFrame({"true": y_true_inv, "pred": y_pred_inv})
+        df.index = index
+
+        csv_file = f"{target}_{PRED_TRUE_CSV}"
+        os.makedirs(PRED_TRUE_DIR, exist_ok=True)
+        df.to_csv(PRED_TRUE_DIR / csv_file)
+        print(f"Saved: {csv_file}")
+
     def get_proceed_data(self, target) -> pd.DataFrame:
         data = self.origin_data.copy()
 
-        features_for_target = self.feature_map.get(target)
-        if not features_for_target:
-            raise ValueError(f"'{target}'에 대한 Feature 목록이 정의되지 않았음.")
-            
-        keep_cols = [target] + features_for_target
+        if target == "usd":
+            keep_cols = [
+                "dgs10",
+                "vix",
+                "dxy",
+                "kr_us_diff",
+                "kr_rate",
+                "us_rate",
+                "usd",
+            ]
+        elif target == "cny":
+            keep_cols = ["cny_fx_reserves", "cny_trade_bal", "wti", "vix", "cny"]
+        elif target == "jpy":
+            keep_cols = ["jpy10", "dgs10", "dgs_jpy_diff", "vix", "jpy"]
+        elif target == "eur":
+            keep_cols = ["eur10", "dxy", "dgs_eur_diff", "vix", "eur"]
+
         data = data[keep_cols]
-        
         self.add_indicators(data=data, target=target)
+
         return data
 
     def get_sequence_data(self, target: str):
@@ -76,11 +103,18 @@ class DataProcessor:
         target_scaled = target_scaler.fit_transform(y.to_frame())
         features_scaled = feature_scaler.fit_transform(X)
 
+        # scaler를 파일로 저장
         os.makedirs(SCALER_DIR, exist_ok=True)
-        joblib.dump(target_scaler, os.path.join(SCALER_DIR, f"{target}_target_scaler.pkl"))
-        joblib.dump(feature_scaler, os.path.join(SCALER_DIR, f"{target}_feature_scaler.pkl"))
+        joblib.dump(
+            target_scaler, os.path.join(SCALER_DIR, f"{target}_target_scaler.pkl")
+        )
+        joblib.dump(
+            feature_scaler, os.path.join(SCALER_DIR, f"{target}_feature_scaler.pkl")
+        )
 
+        # 인덱스도 같이 넘김
         X_seq, y_seq, y_idxs = self.create_sequences(
             X=features_scaled, y=target_scaled, seq_len=LOOK_BACK, y_index=y.index
         )
+
         return X_seq, y_seq, y_idxs

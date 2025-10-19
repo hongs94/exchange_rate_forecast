@@ -1,0 +1,29 @@
+__pycache__/
+.git
+.github
+*.log
+
+# ML 모델 파일 및 데이터 제외
+ml/*/models/
+ml/*/scalers/
+ml/*/pred_true/
+ml/*/*.csv
+ml/*/*.h5
+ml/*/*.keras
+ml/*/*.pth
+ml/*/*.pkl
+ml/*/*.joblib
+
+# 특정 ML 폴더 전체 제외
+ml/attention_lstm/
+ml/attention_lstm_rolling/models/
+ml/attention_lstm_rolling/scalers/
+ml/attention_lstm_rolling_new/models/
+ml/attention_lstm_rolling_new/scalers/
+ml/lstm_mha/models/
+ml/lstm_mha_new/models/
+ml/lstm_mha_new/scalers/
+ml/tcn_new/models/
+ml/tcn_new/scalers/
+ml/xgboost_new/models/
+ml/xgboost_new/scalers/

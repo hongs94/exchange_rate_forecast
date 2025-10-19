@@ -1,5 +1,5 @@
-import sys
 import logging
+import sys
 from .config import config 
 
 log_formatter = logging.Formatter('%(asctime)s [%(levelname)s] [%(filename)s:%(lineno)d] - %(message)s')
